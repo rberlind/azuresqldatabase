@@ -7,6 +7,7 @@ Please do the following:
 1. Run `terraform plan` to do a plan.
 1. Run `terraform apply` to create the resource group, sql server, and database.
 
+## Install homebrew and mssql on Mac to Test Credentials
 If you want to test the database credentials that Vault dynamically generates on a Mac, you could use the [mssql](https://blogs.msdn.microsoft.com/joseph_idzioreks_blog/2015/10/26/azure-sql-database-cli-on-mac-os-x/) tool.
 
 Install homebrew and mssql client on Mac:
@@ -14,7 +15,7 @@ Install homebrew and mssql client on Mac:
 brew install node
 npm install -g sql-cli
 ```
-
+## Connect to Database with Admin User Credentials
 Connect to your database with:
 ```
 mssql -s roger-sqlserver.database.windows.net -u roger -p pAssw0rd -d test-vault –e
@@ -24,9 +25,7 @@ Note that "-e" means encrypt and "-d" indicates database
 
 Use `.quit` to exit mssql tool
 
-We treat Azure database as a contained database:
-
-This means we should use `CREATE USER {{name}} WITH PASSWORD = '{{password}}'`
+## Configure Vault Database Backend for MSSQL
 
 Mount a database backend at path azuresql:
 ```
@@ -55,6 +54,7 @@ vault write azuresql/roles/testvault \
 Success! Data written to: azuresql/roles/testvault
 ```
 
+## Generate and Test Dynamic Credentials for Azure SQL Database
 Generate credentials:
 ```
 vault read azuresql/creds/testvault
