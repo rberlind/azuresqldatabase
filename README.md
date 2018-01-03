@@ -26,6 +26,7 @@ Use `.quit` to exit mssql tool
 
 
 We treat Azure database as a contained database:
+
 This means we should use `CREATE USER {{name}} WITH PASSWORD = '{{password}}'`
 
 Mount a database backend at path azuresql:
