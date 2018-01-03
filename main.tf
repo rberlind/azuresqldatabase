@@ -2,28 +2,55 @@ terraform {
   required_version = ">= 0.11.0"
 }
 
-# Set Azure environment variables
+# Set Azure environment variables before doing plan and apply
 provider "azurerm" {}
 
-resource "azurerm_resource_group" "test" {
-  name     = "rogerAzureSQL"
-  location = "East US"
+variable "resource_group_name" {
+  description = "name of resource group"
 }
 
-resource "azurerm_sql_server" "test" {
-    name = "roger-sqlserver"
-    resource_group_name = "${azurerm_resource_group.test.name}"
-    location = "East US"
+variable "location" {
+  description = "Azure location"
+  default = "US East"
+}
+
+variable "sqlserver_name" {
+  description = "name of Azure sqlserver"
+}
+
+variable "admin_name" {
+  description = "name of Azure sqlserver admin user"
+  default = "admin"
+}
+
+variable "admin_password" {
+  description = "password of Azure sqlserver admin user"
+  default = "pAssw0rd"
+}
+
+variable "db_name" {
+  description = "name of Azure SQL database"
+}
+
+resource "azurerm_resource_group" "rg" {
+  name = "${var.resource_group_name}"
+  location = "${var.location}"
+}
+
+resource "azurerm_sql_server" "sqlserver" {
+    name = "${var.sqlserver_name}"
+    resource_group_name = "${azurerm_resource_group.rg.name}"
+    location = "${var.location}"
     version = "12.0"
-    administrator_login = "roger"
-    administrator_login_password = "pAssw0rd"
+    administrator_login = "${var.admin_name}"
+    administrator_login_password = "${var.admin_password}"
 }
 
-resource "azurerm_sql_database" "test" {
-  name                = "test-vault"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  location = "East US"
-  server_name = "${azurerm_sql_server.test.name}"
+resource "azurerm_sql_database" "db" {
+  name = "${var.db_name}"
+  resource_group_name = "${azurerm_resource_group.rg.name}"
+  location = "${var.location}"
+  server_name = "${azurerm_sql_server.sqlserver.name}"
 
   tags {
     environment = "dev"
@@ -31,9 +58,9 @@ resource "azurerm_sql_database" "test" {
 }
 
 resource "azurerm_sql_firewall_rule" "test" {
-  name                = "AllowVaultAccess"
-  resource_group_name = "${azurerm_resource_group.test.name}"
-  server_name         = "${azurerm_sql_server.test.name}"
-  start_ip_address    = "50.18.144.202"
-  end_ip_address      = "50.18.144.202"
+  name                = "AllowAllAccess"
+  resource_group_name = "${azurerm_resource_group.rg.name}"
+  server_name         = "${azurerm_sql_server.sqlserver.name}"
+  start_ip_address    = "0.0.0.0"
+  end_ip_address      = "255.255.255.255"
 }

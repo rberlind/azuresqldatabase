@@ -1,13 +1,13 @@
-`terraform apply` against main.tf to create database
+# Deploying Azure SQL (PaaS) Database and Generating Dynamic Credentials With Vault
 
-roger-sqlserver.database.windows.net
+## Provision the Azure SQL Server and Database
+Please do the following:
+1. Edit the variables in azuresql.auto.tfvars to provide the resource group name, sqlserver name, and database name you want to use. I used the defaults below which are "rogerAzureSQL", "roger-sqlserver", and "test-vault".
+1. Run `terraform init` to initialize Terraform.
+1. Run `terraform plan` to do a plan.
+1. Run `terraform apply` to create the resource group, sql server, and database.
 
-https://roger-sqlserver.database.windows.net/?langid=en-us#database=master
-
-Added firewall rul in Azure portal to allow ingress from 0.0.0.0 to 255.255.255.255
-
-Found mssql tool for Mac:
-https://blogs.msdn.microsoft.com/joseph_idzioreks_blog/2015/10/26/azure-sql-database-cli-on-mac-os-x/
+If you want to test the database credentials that Vault dynamically generates on a Mac, you could use the [mssql](https://blogs.msdn.microsoft.com/joseph_idzioreks_blog/2015/10/26/azure-sql-database-cli-on-mac-os-x/) tool.
 
 Install homebrew and mssql client on Mac:
 ```
@@ -15,9 +15,9 @@ brew install node
 npm install -g sql-cli
 ```
 
-Connect to master db with:
+Connect to your database with:
 ```
-mssql -s roger-sqlserver.database.windows.net -u roger -p pAssw0rd -d master –e
+mssql -s roger-sqlserver.database.windows.net -u roger -p pAssw0rd -d test-vault –e
 ```
 
 Note that "-e" means encrypt and "-d" indicates database
@@ -36,14 +36,22 @@ Successfully mounted 'database' at 'azuresql'!
 
 Configure the azuresql auth backend:
 ```
-vault write azuresql/config/testvault plugin_name=mssql-database-plugin connection_url='server=roger-sqlserver.database.windows.net;port=1433;user id=roger;password=pAssw0rd;database=test-vault;app name=vault;' allowed_roles="testvault"
+vault write azuresql/config/testvault \
+  plugin_name=mssql-database-plugin \
+  connection_url='server=roger-sqlserver.database.windows.net;port=1433; \
+  user id=roger;password=pAssw0rd;database=test-vault;app name=vault;' \
+  allowed_roles="testvault"
 The following warnings were returned from the Vault server:
 Read access to this endpoint should be controlled via ACLs as it will return the connection details as is, including passwords, if any.
 ```
 
 Configure testvault role for the auth backend with time to live of 2 minutes:
 ```
-vault write azuresql/roles/testvault db_name=testvault creation_statements="CREATE USER [{{name}}] WITH PASSWORD = '{{password}}';" revocation_statements="DROP USER IF EXISTS [{{name}}]" default_ttl="2m" max_ttl="24h"
+vault write azuresql/roles/testvault \
+  db_name=testvault \
+  creation_statements="CREATE USER [{{name}}] WITH PASSWORD = '{{password}}';" \
+  revocation_statements="DROP USER IF EXISTS [{{name}}]" \
+  default_ttl="2m" max_ttl="24h"
 Success! Data written to: azuresql/roles/testvault
 ```
 
