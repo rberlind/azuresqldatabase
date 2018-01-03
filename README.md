@@ -21,6 +21,7 @@ mssql -s roger-sqlserver.database.windows.net -u roger -p pAssw0rd -d master –
 ```
 
 Note that "-e" means encrypt and "-d" indicates database
+
 Use `.quit` to exit mssql tool
 
 
